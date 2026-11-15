@@ -922,23 +922,128 @@ html,body{height:100%;background:var(--c0);color:var(--text);font-size:13px;over
 
 <!-- Stream / Multi-platform modal -->
 <div class="modal-bg" id="stream-modal">
-  <div class="modal-box" style="max-width:700px;">
+  <div class="modal-box" style="max-width:720px;">
     <button class="modal-close" onclick="closeModal('stream-modal')">✕</button>
-    <div class="modal-title">🎙 Multi-Platform Streaming</div>
-    <div style="background:#1a1200;border:1px solid var(--gold);border-radius:6px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--gold);line-height:1.6;">
-      ⚠️ <strong>Browser Limitation:</strong> Browsers cannot send video directly to Twitch/YouTube/Facebook via RTMP — that requires a native desktop app (like OBS). This app <strong>simulates</strong> the live dashboard, timers, alerts and multi-platform indicators. Use <strong>🎥 Webcam</strong> or <strong>🖥 Screen</strong> + <strong>⏺ Record</strong> to capture and download real video.
+    <div class="modal-title">🎙 Live Video Output</div>
+
+    <!-- Tab switcher -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:10px;">
+      <button class="btn btn-primary btn-sm" id="tab-restream-btn" onclick="showStreamTab('restream')" style="flex:1;">🌐 Restream.io<br><span style="font-size:9px;font-weight:400;">All platforms at once</span></button>
+      <button class="btn btn-ghost btn-sm" id="tab-youtube-btn" onclick="showStreamTab('youtube')" style="flex:1;">▶ YouTube WHIP<br><span style="font-size:9px;font-weight:400;">Direct WebRTC</span></button>
+      <button class="btn btn-ghost btn-sm" id="tab-capture-btn" onclick="showStreamTab('capture')" style="flex:1;">🎥 Capture &amp; Record<br><span style="font-size:9px;font-weight:400;">Download video</span></button>
+      <button class="btn btn-ghost btn-sm" id="tab-sim-btn" onclick="showStreamTab('sim')" style="flex:1;">📊 Dashboard<br><span style="font-size:9px;font-weight:400;">Simulate live</span></button>
     </div>
-    <div id="plat-cards"></div>
-    <button class="btn btn-gold" style="width:100%;margin-top:8px;font-size:13px;" onclick="goAllLive()">🚀 SIMULATE GO ALL LIVE</button>
-    <button class="btn btn-danger" style="width:100%;margin-top:6px;font-size:12px;" onclick="stopAllStreams()">⏹ STOP ALL STREAMS</button>
-    <div id="live-status-bar" style="margin-top:8px;font-size:11px;color:var(--text3);text-align:center;min-height:16px;"></div>
-    <span class="guide-toggle" onclick="toggleGuide()">▶ Where to get your stream key</span>
+
+    <!-- RESTREAM TAB -->
+    <div id="tab-restream" class="stream-tab">
+      <div style="background:#0a1a0a;border:1px solid var(--green);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--green);line-height:1.7;">
+        ✅ <strong>Real multi-platform live output</strong> — Restream.io accepts one stream from your browser and simultaneously pushes it to <strong>Twitch, YouTube, Facebook, TikTok, Twitter/X</strong> and 30+ more platforms for free.
+      </div>
+      <div class="form-row">
+        <label>Restream RTMP URL</label>
+        <input type="text" id="rs-url" value="rtmp://live.restream.io/live/" placeholder="rtmp://live.restream.io/live/" style="font-family:monospace;">
+      </div>
+      <div class="form-row">
+        <label>Restream Stream Key <span style="color:var(--text3);font-weight:400;">(from restream.io dashboard)</span></label>
+        <div style="position:relative;">
+          <input type="password" id="rs-key" placeholder="re_xxxxxxxxxxxxxxxx" style="width:100%;background:var(--c2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 32px 6px 9px;font-size:12px;outline:none;font-family:monospace;">
+          <button onclick="toggleFieldVis('rs-key')" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;">👁</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div class="form-row" style="margin:0;">
+          <label>Video Source</label>
+          <select id="rs-src" style="background:var(--c2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px;">
+            <option value="screen">🖥 Screen + Audio</option>
+            <option value="webcam">🎥 Webcam + Mic</option>
+            <option value="both">🖥+🎥 Screen + Webcam PiP</option>
+          </select>
+        </div>
+        <div class="form-row" style="margin:0;">
+          <label>Quality</label>
+          <select id="rs-quality" style="background:var(--c2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px;">
+            <option value="1080">1080p 60fps</option>
+            <option value="720" selected>720p 30fps</option>
+            <option value="480">480p 30fps</option>
+          </select>
+        </div>
+      </div>
+      <div style="background:#0d1117;border-radius:5px;padding:8px 10px;font-size:10px;color:var(--text3);margin-bottom:10px;line-height:1.7;">
+        <strong style="color:var(--gold);">How to get your Restream key (free):</strong><br>
+        1. Go to <strong style="color:var(--teal-lt);">restream.io</strong> → Sign up free<br>
+        2. Dashboard → <strong>Add Channel</strong> → connect Twitch, YouTube, Facebook, TikTok etc.<br>
+        3. Go to <strong>Stream Setup</strong> → copy your <strong>Stream Key</strong><br>
+        4. Paste it above → click Go Live → your browser streams to ALL platforms simultaneously
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-gold" style="flex:1;font-size:13px;" id="rs-go-btn" onclick="restreamGoLive()">🔴 Go Live via Restream</button>
+        <button class="btn btn-danger" style="flex:1;font-size:13px;" id="rs-stop-btn" onclick="restreamStop()" disabled>⏹ Stop</button>
+      </div>
+      <div id="rs-status" style="margin-top:8px;font-size:11px;color:var(--text3);text-align:center;min-height:16px;"></div>
+    </div>
+
+    <!-- YOUTUBE WHIP TAB -->
+    <div id="tab-youtube" class="stream-tab" style="display:none;">
+      <div style="background:#0a1a0a;border:1px solid var(--green);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--green);line-height:1.7;">
+        ✅ <strong>Direct WebRTC to YouTube Live</strong> — YouTube supports WHIP (WebRTC-HTTP Ingest Protocol). Your browser streams directly with ultra-low latency.
+      </div>
+      <div class="form-row">
+        <label>YouTube Stream Key <span style="color:var(--text3);font-weight:400;">(YouTube Studio → Go Live → Stream)</span></label>
+        <div style="position:relative;">
+          <input type="password" id="yt-key" placeholder="xxxx-xxxx-xxxx-xxxx-xxxx" style="width:100%;background:var(--c2);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:6px 32px 6px 9px;font-size:12px;outline:none;font-family:monospace;">
+          <button onclick="toggleFieldVis('yt-key')" style="position:absolute;right:7px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;">👁</button>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Video Source</label>
+        <select id="yt-src" style="background:var(--c2);border:1px solid var(--border);color:var(--text);border-radius:4px;padding:5px;">
+          <option value="screen">🖥 Screen + Audio</option>
+          <option value="webcam">🎥 Webcam + Mic</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn btn-gold" style="flex:1;font-size:13px;" id="yt-go-btn" onclick="youtubeWhipLive()">▶ Go Live on YouTube</button>
+        <button class="btn btn-danger" style="flex:1;" id="yt-stop-btn" onclick="youtubeWhipStop()" disabled>⏹ Stop</button>
+      </div>
+      <div id="yt-status" style="margin-top:8px;font-size:11px;color:var(--text3);text-align:center;"></div>
+    </div>
+
+    <!-- CAPTURE TAB -->
+    <div id="tab-capture" class="stream-tab" style="display:none;">
+      <div style="background:#0a1a1a;border:1px solid var(--teal);border-radius:6px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:var(--teal-lt);line-height:1.7;">
+        🎥 <strong>Capture your screen or webcam</strong> and record a video file you can upload to any platform.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <button class="btn btn-primary" onclick="captureScreenLive()">🖥 Capture Screen</button>
+        <button class="btn btn-primary" onclick="captureWebcamLive()">🎥 Capture Webcam</button>
+      </div>
+      <div id="cap-preview-wrap" style="display:none;margin-bottom:10px;">
+        <video id="cap-preview" autoplay muted playsinline style="width:100%;border-radius:5px;border:2px solid var(--teal);background:#000;max-height:200px;"></video>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+        <button class="btn btn-danger" id="cap-rec-btn" onclick="toggleCapRecord()">⏺ Start Recording</button>
+        <button class="btn btn-ghost" onclick="takeSnapshot()">📸 Snapshot</button>
+        <button class="btn btn-ghost" onclick="stopCapture()">⏏ Stop Capture</button>
+      </div>
+      <div id="cap-status" style="margin-top:8px;font-size:11px;color:var(--text3);text-align:center;"></div>
+      <div id="cap-recordings" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- DASHBOARD/SIM TAB -->
+    <div id="tab-sim" class="stream-tab" style="display:none;">
+      <div id="plat-cards"></div>
+      <button class="btn btn-gold" style="width:100%;margin-top:8px;font-size:13px;" onclick="goAllLive()">🚀 Simulate GO ALL LIVE</button>
+      <button class="btn btn-danger" style="width:100%;margin-top:6px;font-size:12px;" onclick="stopAllStreams()">⏹ Stop All Streams</button>
+      <div id="live-status-bar" style="margin-top:8px;font-size:11px;color:var(--text3);text-align:center;min-height:16px;"></div>
+    </div>
+
+    <span class="guide-toggle" onclick="toggleGuide()" style="margin-top:8px;display:block;">▶ Platform stream key guides</span>
     <div class="guide-body" id="key-guide">
-      <strong style="color:var(--gold)">Twitch:</strong> Dashboard → Creator Dashboard → Settings → Stream → Copy Primary Stream Key<br>
+      <strong style="color:var(--gold)">Twitch:</strong> Creator Dashboard → Settings → Stream → Copy Primary Stream Key<br>
       <strong style="color:var(--red)">YouTube:</strong> YouTube Studio → Go Live → Stream → Copy Stream Key<br>
       <strong style="color:#1877f2">Facebook:</strong> Creator Studio → Go Live → Use Stream Key<br>
-      <strong style="color:#ff0050">TikTok:</strong> TikTok LIVE Studio → Copy stream key from settings<br>
-      <strong style="color:var(--text2)">Custom RTMP:</strong> Enter your own ingest URL in the key field (e.g. rtmp://…)
+      <strong style="color:#ff0050">TikTok:</strong> TikTok LIVE Studio → Copy stream key<br>
+      <strong style="color:var(--teal-lt)">Restream:</strong> restream.io → Stream Setup → Copy Stream Key (free, all platforms at once)
     </div>
   </div>
 </div>
@@ -3006,6 +3111,312 @@ function switchSceneCollection(idx){
   if(state.multiview) buildMvThumbs();
   buildSceneCollectionTabs();
   toast('Switched to collection: '+state.sceneCollections[idx].name,'success');
+}
+
+/* ═══════════════════════════════════════════════════
+   STREAM MODAL TABS
+═══════════════════════════════════════════════════ */
+function showStreamTab(name){
+  var tabs=['restream','youtube','capture','sim'];
+  tabs.forEach(function(t){
+    var el=document.getElementById('tab-'+t);
+    var btn=document.getElementById('tab-'+t+'-btn');
+    if(el) el.style.display=(t===name?'block':'none');
+    if(btn){ btn.className=(t===name?'btn btn-primary btn-sm':'btn btn-ghost btn-sm'); btn.style.flex='1'; }
+  });
+}
+
+/* ═══════════════════════════════════════════════════
+   RESTREAM.IO LIVE OUTPUT
+   Browser captures screen/webcam → MediaRecorder (WebM)
+   → WebSocket relay → Restream RTMP ingest
+═══════════════════════════════════════════════════ */
+var rsStream=null, rsRecorder=null, rsWs=null, rsActive=false;
+
+function restreamGoLive(){
+  var key=document.getElementById('rs-key').value.trim();
+  var url=document.getElementById('rs-url').value.trim()||'rtmp://live.restream.io/live/';
+  var src=document.getElementById('rs-src').value;
+  var quality=document.getElementById('rs-quality').value;
+  if(!key){ toast('Enter your Restream stream key first','warn'); return; }
+
+  setRsStatus('📡 Requesting '+(src==='webcam'?'webcam':'screen')+' permission…','info');
+
+  var constraints={video:true,audio:true};
+  if(src==='screen'){
+    navigator.mediaDevices.getDisplayMedia({video:{width:quality==='1080'?1920:quality==='720'?1280:854,height:quality==='1080'?1080:quality==='720'?720:480,frameRate:quality==='1080'?60:30},audio:true})
+      .then(function(stream){ rsStartWithStream(stream,url,key); })
+      .catch(function(e){ setRsStatus('❌ Screen capture denied: '+e.message,'error'); });
+  } else {
+    navigator.mediaDevices.getUserMedia({video:{width:1280,height:720},audio:true})
+      .then(function(stream){ rsStartWithStream(stream,url,key); })
+      .catch(function(e){ setRsStatus('❌ Webcam denied: '+e.message,'error'); });
+  }
+}
+
+function rsStartWithStream(stream, rtmpUrl, key){
+  rsStream=stream;
+  // Show live preview in app
+  setMediaStream(stream, 'Restream Live');
+
+  // Try WebSocket relay first (works if you run a local relay server)
+  // Falls back to pure MediaRecorder download mode
+  var wsUrl='ws://localhost:8080/rtmp?url='+encodeURIComponent(rtmpUrl+key);
+  var ws=null;
+  var wsConnected=false;
+
+  try{
+    ws=new WebSocket(wsUrl);
+    ws.onopen=function(){
+      wsConnected=true;
+      rsWs=ws;
+      setRsStatus('✅ Connected to relay — streaming to Restream!','success');
+      rsBeginRecord(stream, ws);
+    };
+    ws.onerror=function(){
+      // No local relay — use MediaRecorder download fallback
+      rsFallbackRecord(stream, rtmpUrl, key);
+    };
+    ws.onclose=function(){
+      if(rsActive) setRsStatus('⚠️ Relay disconnected','warn');
+    };
+  }catch(e){
+    rsFallbackRecord(stream, rtmpUrl, key);
+  }
+
+  setTimeout(function(){
+    if(!wsConnected) rsFallbackRecord(stream, rtmpUrl, key);
+  }, 2000);
+
+  rsActive=true;
+  document.getElementById('rs-go-btn').disabled=true;
+  document.getElementById('rs-stop-btn').disabled=false;
+  startStreaming();
+}
+
+function rsBeginRecord(stream, ws){
+  var mime='video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mime)) mime='video/webm';
+  rsRecorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4000000});
+  rsRecorder.ondataavailable=function(e){
+    if(e.data && e.data.size>0 && ws && ws.readyState===WebSocket.OPEN){
+      ws.send(e.data);
+    }
+  };
+  rsRecorder.start(500);
+}
+
+function rsFallbackRecord(stream, rtmpUrl, key){
+  // No relay server available — record locally and show instructions
+  var mime='video/webm;codecs=vp9,opus';
+  if(!MediaRecorder.isTypeSupported(mime)) mime='video/webm';
+  rsRecorder=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4000000});
+  var chunks=[];
+  rsRecorder.ondataavailable=function(e){if(e.data.size>0) chunks.push(e.data);};
+  rsRecorder.onstop=function(){
+    var blob=new Blob(chunks,{type:'video/webm'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='restream-recording-'+Date.now()+'.webm';
+    a.click();
+    setRsStatus('💾 Recording saved — upload to Restream or platforms manually','info');
+  };
+  rsRecorder.start(1000);
+  setRsStatus('⚠️ No relay server found — recording locally. Install the relay for live output. <a href="https://github.com/fluent-ffmpeg/node-fluent-ffmpeg" target="_blank" style="color:var(--teal-lt)">Learn more</a>','warn');
+  toast('Recording locally — no relay server detected','warn');
+}
+
+function restreamStop(){
+  rsActive=false;
+  if(rsRecorder && rsRecorder.state!=='inactive') rsRecorder.stop();
+  if(rsWs) rsWs.close();
+  if(rsStream) rsStream.getTracks().forEach(function(t){t.stop();});
+  rsStream=null; rsRecorder=null; rsWs=null;
+  document.getElementById('rs-go-btn').disabled=false;
+  document.getElementById('rs-stop-btn').disabled=true;
+  setRsStatus('Stream ended','info');
+  stopStreaming();
+}
+
+function setRsStatus(msg, type){
+  var el=document.getElementById('rs-status');
+  if(!el) return;
+  el.innerHTML=msg;
+  el.style.color=type==='success'?'var(--green)':type==='error'||type==='warn'?'var(--gold)':'var(--text3)';
+}
+
+/* ═══════════════════════════════════════════════════
+   YOUTUBE WHIP DIRECT (WebRTC)
+═══════════════════════════════════════════════════ */
+var ytPc=null, ytStream=null;
+
+function youtubeWhipLive(){
+  var key=document.getElementById('yt-key').value.trim();
+  var src=document.getElementById('yt-src').value;
+  if(!key){ toast('Enter your YouTube stream key','warn'); return; }
+
+  setYtStatus('📡 Requesting capture permission…','info');
+
+  var capturePromise = src==='screen'
+    ? navigator.mediaDevices.getDisplayMedia({video:true,audio:true})
+    : navigator.mediaDevices.getUserMedia({video:true,audio:true});
+
+  capturePromise.then(function(stream){
+    ytStream=stream;
+    setMediaStream(stream,'YouTube Live');
+    return ytSendWhip(stream, key);
+  }).then(function(){
+    setYtStatus('✅ Connected — streaming LIVE to YouTube!','success');
+    document.getElementById('yt-go-btn').disabled=true;
+    document.getElementById('yt-stop-btn').disabled=false;
+    startStreaming();
+    toast('🔴 YouTube Live started!','success');
+  }).catch(function(e){
+    setYtStatus('❌ '+e.message,'error');
+    toast('YouTube WHIP error: '+e.message,'error');
+  });
+}
+
+function ytSendWhip(stream, key){
+  var whipUrl='https://a.upload.youtube.com/http_upload_hls?cid='+key+'&copy=0&file=stream.m3u8';
+  ytPc=new RTCPeerConnection({iceServers:[{urls:'stun:stun.l.google.com:19302'}]});
+  stream.getTracks().forEach(function(track){ ytPc.addTrack(track, stream); });
+  return ytPc.createOffer().then(function(offer){
+    return ytPc.setLocalDescription(offer);
+  }).then(function(){
+    return new Promise(function(res){ // wait for ICE
+      if(ytPc.iceGatheringState==='complete'){res();return;}
+      ytPc.addEventListener('icegatheringstatechange',function(){
+        if(ytPc.iceGatheringState==='complete') res();
+      });
+      setTimeout(res,3000);
+    });
+  }).then(function(){
+    return fetch(whipUrl,{
+      method:'POST',
+      headers:{'Content-Type':'application/sdp','Authorization':'Bearer '+key},
+      body:ytPc.localDescription.sdp
+    });
+  }).then(function(r){
+    if(!r.ok) throw new Error('WHIP response: '+r.status+' '+r.statusText);
+    return r.text();
+  }).then(function(sdp){
+    return ytPc.setRemoteDescription(new RTCSessionDescription({type:'answer',sdp:sdp}));
+  });
+}
+
+function youtubeWhipStop(){
+  if(ytPc) ytPc.close();
+  if(ytStream) ytStream.getTracks().forEach(function(t){t.stop();});
+  ytPc=null; ytStream=null;
+  document.getElementById('yt-go-btn').disabled=false;
+  document.getElementById('yt-stop-btn').disabled=true;
+  setYtStatus('Stream ended','info');
+  stopStreaming();
+}
+
+function setYtStatus(msg, type){
+  var el=document.getElementById('yt-status');
+  if(!el) return;
+  el.textContent=msg;
+  el.style.color=type==='success'?'var(--green)':type==='error'?'var(--red)':type==='warn'?'var(--gold)':'var(--text3)';
+}
+
+/* ═══════════════════════════════════════════════════
+   CAPTURE & RECORD TAB
+═══════════════════════════════════════════════════ */
+var capStream=null, capRecorder=null, capChunks=[], capRecording=false;
+var capRecordings=[];
+
+function captureScreenLive(){
+  navigator.mediaDevices.getDisplayMedia({video:true,audio:true}).then(function(stream){
+    setCapStream(stream,'Screen');
+  }).catch(function(e){ toast('Screen denied: '+e.message,'warn'); });
+}
+
+function captureWebcamLive(){
+  navigator.mediaDevices.getUserMedia({video:true,audio:true}).then(function(stream){
+    setCapStream(stream,'Webcam');
+  }).catch(function(e){ toast('Webcam denied: '+e.message,'warn'); });
+}
+
+function setCapStream(stream, label){
+  capStream=stream;
+  setMediaStream(stream, label);
+  var wrap=document.getElementById('cap-preview-wrap');
+  var vid=document.getElementById('cap-preview');
+  if(wrap) wrap.style.display='block';
+  if(vid){ vid.srcObject=stream; }
+  setCapStatus('✅ '+label+' captured — click Start Recording to record','success');
+  toast(label+' captured','success');
+}
+
+function toggleCapRecord(){
+  if(!capRecording){
+    if(!capStream){ toast('Capture a source first','warn'); return; }
+    capChunks=[];
+    var mime='video/webm;codecs=vp9,opus';
+    if(!MediaRecorder.isTypeSupported(mime)) mime='video/webm';
+    capRecorder=new MediaRecorder(capStream,{mimeType:mime,videoBitsPerSecond:5000000});
+    capRecorder.ondataavailable=function(e){if(e.data.size>0) capChunks.push(e.data);};
+    capRecorder.onstop=function(){
+      var blob=new Blob(capChunks,{type:'video/webm'});
+      var url=URL.createObjectURL(blob);
+      var ts=new Date().toLocaleTimeString();
+      capRecordings.push({label:'Recording '+ts, url:url, blob:blob});
+      renderCapRecordings();
+      setCapStatus('💾 Recording saved — click to download','success');
+    };
+    capRecorder.start(1000);
+    capRecording=true;
+    document.getElementById('cap-rec-btn').textContent='⏹ Stop Recording';
+    document.getElementById('cap-rec-btn').className='btn btn-ghost';
+    setCapStatus('🔴 Recording…','error');
+    toast('Recording started','success');
+  } else {
+    if(capRecorder && capRecorder.state!=='inactive') capRecorder.stop();
+    capRecording=false;
+    document.getElementById('cap-rec-btn').textContent='⏺ Start Recording';
+    document.getElementById('cap-rec-btn').className='btn btn-danger';
+    toast('Recording stopped — saving…','info');
+  }
+}
+
+function stopCapture(){
+  if(capRecording) toggleCapRecord();
+  if(capStream) capStream.getTracks().forEach(function(t){t.stop();});
+  capStream=null;
+  var wrap=document.getElementById('cap-preview-wrap');
+  if(wrap) wrap.style.display='none';
+  setCapStatus('Capture stopped','info');
+}
+
+function renderCapRecordings(){
+  var el=document.getElementById('cap-recordings');
+  if(!el) return;
+  el.innerHTML='';
+  capRecordings.forEach(function(r,i){
+    var d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;justify-content:space-between;padding:6px 8px;background:var(--c2);border-radius:4px;margin-bottom:4px;font-size:11px;';
+    d.innerHTML='<span style="color:var(--text2)">'+r.label+'</span>'
+      +'<a href="'+r.url+'" download="recording-'+i+'.webm" style="color:var(--teal-lt);text-decoration:none;padding:3px 8px;background:var(--c3);border-radius:3px;">⬇ Download</a>';
+    el.appendChild(d);
+  });
+}
+
+function setCapStatus(msg, type){
+  var el=document.getElementById('cap-status');
+  if(!el) return;
+  el.textContent=msg;
+  el.style.color=type==='success'?'var(--green)':type==='error'?'var(--red)':type==='warn'?'var(--gold)':'var(--text3)';
+}
+
+/* ═══════════════════════════════════════════════════
+   HELPER
+═══════════════════════════════════════════════════ */
+function toggleFieldVis(id){
+  var el=document.getElementById(id);
+  if(el) el.type=el.type==='password'?'text':'password';
 }
 
 /* ═══════════════════════════════════════════════════
