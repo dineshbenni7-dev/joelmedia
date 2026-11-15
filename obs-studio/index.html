@@ -1765,50 +1765,59 @@ function updateComp(){
 /* ═══════════════════════════════════════════════════
    STREAM CONTROL
 ═══════════════════════════════════════════════════ */
-function toggleStream(){
-  if(!state.streaming){
-    var anyEnabled = state.platforms.filter(function(p){return p.enabled && p.key;}).length > 0;
-    if(!anyEnabled){
-      openModal('stream-modal');
-      toast('Configure at least one platform first','warn');
-      return;
-    }
-    state.streaming = true;
-    state.streamStart = Date.now();
-    if(!state.sessionStart) state.sessionStart = Date.now();
-    state.platforms.forEach(function(p){if(p.enabled && p.key) p.live=true;});
-    document.getElementById('tb-stream').className='tb-btn gold active';
-    document.getElementById('tb-stream').textContent='⏹ Stream';
-    document.getElementById('stream-status-pill').className='status-pill live';
-    document.getElementById('stream-status-pill').textContent='🔴 LIVE';
-    document.getElementById('prog-badge').className='monitor-badge badge-program';
-    document.getElementById('prog-info').textContent='🔴 Live';
-    document.getElementById('prog-overlay-lbl').className='canvas-overlay-label program-overlay';
-    updatePlatformDock();
-    updatePlatCards();
-    renderLiveStatusBar();
-    toast('Stream started!', 'success');
-    scheduleAlerts();
+function startStreaming(){
+  state.streaming = true;
+  state.streamStart = Date.now();
+  if(!state.sessionStart) state.sessionStart = Date.now();
+  // Mark all enabled platforms live (key optional — demo mode)
+  var anyEnabled = state.platforms.filter(function(p){return p.enabled;});
+  if(anyEnabled.length === 0){
+    // Auto-enable all platforms in demo mode
+    state.platforms.forEach(function(p){ p.enabled=true; p.live=true; });
   } else {
-    state.streaming = false;
-    state.platforms.forEach(function(p){p.live=false;});
-    document.getElementById('tb-stream').className='tb-btn gold';
-    document.getElementById('tb-stream').textContent='▶ Stream';
-    document.getElementById('stream-status-pill').className='status-pill';
-    document.getElementById('stream-status-pill').textContent='⏺ OFFLINE';
-    document.getElementById('prog-info').textContent='Not live';
-    updatePlatformDock();
-    updatePlatCards();
-    renderLiveStatusBar();
-    toast('Stream stopped', 'info');
+    state.platforms.forEach(function(p){ if(p.enabled) p.live=true; });
   }
+  document.getElementById('tb-stream').className='tb-btn gold active';
+  document.getElementById('tb-stream').textContent='⏹ Stop Stream';
+  document.getElementById('stream-status-pill').className='status-pill live';
+  document.getElementById('stream-status-pill').textContent='🔴 LIVE';
+  document.getElementById('prog-badge').className='monitor-badge badge-program';
+  document.getElementById('prog-info').textContent='🔴 Live';
+  document.getElementById('prog-overlay-lbl').className='canvas-overlay-label program-overlay';
+  document.getElementById('prog-overlay-lbl').textContent='PROGRAM';
+  updatePlatformDock();
+  updatePlatCards();
+  renderLiveStatusBar();
+  toast('🔴 Stream is LIVE!', 'success');
+  scheduleAlerts();
+}
+
+function stopStreaming(){
+  state.streaming = false;
+  state.platforms.forEach(function(p){p.live=false;});
+  document.getElementById('tb-stream').className='tb-btn gold';
+  document.getElementById('tb-stream').textContent='▶ Stream';
+  document.getElementById('stream-status-pill').className='status-pill';
+  document.getElementById('stream-status-pill').textContent='⏺ OFFLINE';
+  document.getElementById('prog-info').textContent='Not live';
+  updatePlatformDock();
+  updatePlatCards();
+  renderLiveStatusBar();
+  toast('Stream stopped', 'info');
+}
+
+function toggleStream(){
+  if(!state.streaming) startStreaming();
+  else stopStreaming();
 }
 
 function goAllLive(){
-  var readyPlatforms = state.platforms.filter(function(p){return p.enabled && p.key;});
-  if(!readyPlatforms.length){ toast('Enable platforms & add keys first','warn'); return; }
-  if(!state.streaming) toggleStream();
-  else toast('Already streaming!','info');
+  if(state.streaming){ toast('Already streaming! Click ⏹ Stop Stream to end.','info'); return; }
+  // Enable all platforms
+  state.platforms.forEach(function(p){ p.enabled=true; });
+  startStreaming();
+  updatePlatCards();
+  buildPlatformCards();
 }
 
 function stopAllStreams(){
